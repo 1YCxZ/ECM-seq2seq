@@ -1,0 +1,41 @@
+configuration:
+  Name: Seq2seq_BiLSTM_Attn_BeamSearch
+  workspace: ./works/sampled_softmax/
+  tf_board: ./works/sampled_softmax/tfboard/
+  decoder:
+    attn_num_units: 1024
+    cell_type: LSTM
+    num_layers: 2
+    num_units: 1024
+    state_pass: True
+    infer_max_iter: 25
+  embeddings:
+    embed_size: 300
+    vocab_size: 50000
+  encoder:
+    bidirectional: True
+    cell_type: LSTM
+    num_layers: 2
+    num_units: 1024
+  inference:
+    is_beam_search: True
+    beam_size: 5
+    infer_batch_size: 1
+    infer_source_file: ./works/sampled_softmax/data/dev_source.txt
+    infer_source_max_length: 25
+    output_path: ./works/sampled_softmax/results/prediciton.txt
+  training:
+    batch_size: 64
+    checkpoint_every: 1000
+    train_source_file: ./works/sampled_softmax/data/train_source.txt
+    train_target_file: ./works/sampled_softmax/data/train_target.txt
+    dev_source_file: ./works/sampled_softmax/data/dev_source.txt
+    dev_target_file: ./works/sampled_softmax/data/dev_target.txt
+    max_length: 25
+    gpu_fraction: 0.5
+    gpu_id: '6'
+    l2_regularize: null
+    learning_rate: 0.001
+    max_checkpoints: 100
+    print_every: 200
+    train_steps: 1000000

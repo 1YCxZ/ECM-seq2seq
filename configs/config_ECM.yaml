@@ -1,0 +1,51 @@
+configuration:
+  Name: EmotionChattingMachine
+  workspace: ./works/stc_ecm/
+  tf_board: ./works/stc_ecm/tfboard/
+  decoder:
+    attn_num_units: 512
+    cell_type: LSTM
+    num_layers: 2
+    num_units: 512
+    state_pass: True
+    infer_max_iter: 25
+    emo_cat_emb_size: 128
+    emo_internal_memory_units: 256
+    num_emotion: 6
+  embeddings:
+    embed_size: 300
+    vocab_size: 40000
+  encoder:
+    bidirectional: True
+    cell_type: LSTM
+    num_layers: 2
+    num_units: 512
+  inference:
+    is_beam_search: True
+    beam_size: 5
+    infer_batch_size: 1
+    infer_source_file: ./works/stc_ecm/data/dev_source.txt
+    infer_target_file: ./works/stc_ecm/data/dev_target.txt
+    infer_emotion_category_file: ./works/stc_ecm/data/dev_category.txt
+    infer_source_max_length: 25
+    output_path: ./works/stc_ecm/results/ECM_prediciton.txt
+    output_choice_path: ./works/stc_ecm/results/ECM_choice.txt
+  training:
+    batch_size: 64
+    checkpoint_every: 1000
+    train_source_file: ./works/stc_ecm/data/train_source.txt
+    train_target_file: ./works/stc_ecm/data/train_target.txt
+    train_choice_file: ./works/stc_ecm/data/train_choice.txt
+    train_category_file: ./works/stc_ecm/data/train_category.txt
+    dev_source_file: ./works/stc_ecm/data/dev_source.txt
+    dev_target_file: ./works/stc_ecm/data/dev_target.txt
+    dev_choice_file: ./works/stc_ecm/data/dev_choice.txt
+    dev_category_file: ./works/stc_ecm/data/dev_category.txt
+    max_length: 25
+    gpu_fraction: 0.9
+    gpu_id: '1'
+    l2_regularize: null
+    learning_rate: 0.001
+    max_checkpoints: 100
+    print_every: 200
+    train_steps: 1000000
