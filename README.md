@@ -1,6 +1,6 @@
 Emotional Chatting Machine
 ==========================
-This reponsitory including two models
+This reponsitory includes two models
 - a basic seq2seq model with attention and beamsearch
 - ECM model
 
