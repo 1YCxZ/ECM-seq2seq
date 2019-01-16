@@ -1,5 +1,8 @@
 Emotional Chatting Machine
 ==========================
+This reponsitory including two models
+- a basic seq2seq model with attention and beamsearch
+- ECM model
 
 ## requirements
 - python 2.7
