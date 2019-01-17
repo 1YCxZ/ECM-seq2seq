@@ -40,7 +40,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run seq2seq training.")
 
     parser.add_argument('--config', nargs='?',
-                        default='./configs/config_ECM.yaml',
+                        default='./configs/ecm_config.yaml',
                         help='Configuration file for model specifications')
 
     return parser.parse_args()

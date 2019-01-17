@@ -1,5 +1,5 @@
 configuration:
-  Name: Seq2seq_BiLSTM_Attn_BeamSearch
+  Name: basic_seq2seq
   workspace: ./works/sampled_softmax/
   tf_board: ./works/sampled_softmax/tfboard/
   decoder:

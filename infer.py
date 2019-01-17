@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run seq2seq inference.")
 
     parser.add_argument('--config', nargs='?',
-                        default='./configs/config_seq2seqAttn_beamsearch_infer.yaml',
+                        default='./configs/basic_config.yaml',
                         help='Configuration file for model specifications')
 
     return parser.parse_args()

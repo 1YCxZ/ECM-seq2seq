@@ -39,7 +39,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run seq2seq training.")
 
     parser.add_argument('--config', nargs='?',
-                        default='./configs/config_seq2seqAttn_beamsearch.yaml',
+                        default='./configs/basic_config.yaml',
                         help='Configuration file for model specifications')
 
     return parser.parse_args()
@@ -62,7 +62,7 @@ def main(args):
     vocab_size = config["embeddings"]["vocab_size"]
     embed_size = config["embeddings"]["embed_size"]
 
-    vocab_file = '%s/data/%s-%s' % (work_space, "vocab", vocab_size)
+    vocab_file = '%s/data_debug/%s-%s' % (work_space, "vocab", vocab_size)
     print("\tDone.")
 
     # Build the model and compute losses

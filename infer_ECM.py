@@ -11,13 +11,18 @@ import time
 from pprint import pprint
 import utils
 
+# p_map = {
+#     0: 'other',
+#     1: 'like',
+#     2: 'Sadness',
+#     3: 'Disgust',
+#     4: 'Anger',
+#     5: 'Happiness'
+# }
 p_map = {
     0: 'other',
-    1: 'like',
-    2: 'Sadness',
-    3: 'Disgust',
-    4: 'Anger',
-    5: 'Happiness'
+    1: 'pos',
+    2: 'neg',
 }
 
 def parse_args():
@@ -27,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run seq2seq inference.")
 
     parser.add_argument('--config', nargs='?',
-                        default='./configs/config_ECM.yaml',
+                        default='./configs/ecm_config.yaml',
                         help='Configuration file for model specifications')
 
     return parser.parse_args()
@@ -53,7 +58,7 @@ def main(args):
     print("Initializing embeddings ...")
     vocab_size = config["embeddings"]["vocab_size"]
     embed_size = config["embeddings"]["embed_size"]
-    vocab_file = '%s/data/%s-%s' % (work_space, "vocab", vocab_size)
+    vocab_file = '%s/data_debug/%s-%s' % (work_space, "vocab", vocab_size)
     print("\tDone.")
 
     (enc_num_layers, enc_num_units, enc_cell_type, enc_bidir,
@@ -91,10 +96,10 @@ def main(args):
     print('global_variables:\n')
     # glob_var = tf.global_variables()
     # pprint(glob_var)
-    model_path = '%s/model.ckpt-53000' % restore_from
+    # model_path = '%s/model.ckpt-53000' % restore_from
 
     try:
-        saved_global_step = load(ecm_model.saver, sess, restore_from, model_path=model_path)
+        saved_global_step = load(ecm_model.saver, sess, restore_from)
         if saved_global_step is None:
             raise ValueError("Cannot find the checkpoint to restore from.")
 
@@ -116,8 +121,8 @@ def main(args):
     # Load vocabularies.
     vocab_table, reverse_vocab_table = create_vocab_tables(vocab_file)
 
-    src_dataset, tgt_dataset = prepare_ecm_infer_data(infer_source_file, infer_emotion_category_file,
-                                         vocab_table, max_length=infer_source_max_length,target_file=infer_target_file)
+    src_dataset = prepare_ecm_infer_data(infer_source_file, infer_emotion_category_file,
+                                         vocab_table, max_length=infer_source_max_length)
     print("\tDone.")
 
     # Inference
@@ -130,7 +135,7 @@ def main(args):
         batch = get_ecm_infer_batch(src_dataset, start, end, infer_source_max_length)
 
         sentence = token_to_str(batch[0][0], reverse_vocab_table)
-        target = token_to_str(tgt_dataset[ith], reverse_vocab_table)
+        # target = token_to_str(tgt_dataset[ith], reverse_vocab_table)
         emo_category = p_map[batch[2][0]]
 
         start_time = time.time()
@@ -138,7 +143,8 @@ def main(args):
         duration =round((time.time() - start_time), 3)
         print("sentence:%s, cost:%s s" % (ith, duration))
 
-        res = "src:{}  emotion:{}\ntgt:{}\n".format(sentence, emo_category, target)
+        # res = "src:{}  emotion:{}\ntgt:{}\n".format(sentence, emo_category, target)
+        res = "src:{}  emotion:{}\n".format(sentence, emo_category)
         if is_beam_search is True:
             for idx, i in enumerate(result[0][0]):
                 reply = token_to_str(i, reverse_vocab_table)

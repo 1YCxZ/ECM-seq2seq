@@ -24,11 +24,11 @@ configuration:
     is_beam_search: True
     beam_size: 5
     infer_batch_size: 1
-    infer_source_file: ./works/stc_ecm/data/dev_source.txt
+    infer_source_file: ./works/stc_ecm/data/xs_log_source.txt
     infer_target_file: ./works/stc_ecm/data/dev_target.txt
-    infer_emotion_category_file: ./works/stc_ecm/data/dev_category.txt
+    infer_emotion_category_file: ./works/stc_ecm/data/xs_log_category.txt
     infer_source_max_length: 25
-    output_path: ./works/stc_ecm/results/ECM_prediciton.txt
+    output_path: ./works/stc_ecm/results/xs_log_prediciton.txt
     output_choice_path: ./works/stc_ecm/results/ECM_choice.txt
   training:
     batch_size: 64
