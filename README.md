@@ -6,7 +6,7 @@ This reponsitory includes two models
 
 Thanks to https://github.com/AaronYALai/Seq2seqAttn_ECM, I learn a lot from this reponsitory.
 However, I can't get a satisfactory results on the chinese corpus when I use AaronYALai's model.
-So, I implement a new ECM model based on the tensorflow seq2seq API.
+So, I implement a new ECM model based on the [tensorflow seq2seq API](https://tensorflow.google.cn/api_docs/python/tf/contrib/seq2seq).
 
 ## requirements
 - python 2.7
