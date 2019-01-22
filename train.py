@@ -6,7 +6,7 @@ from utils import get_training_config
 from utils import load, save, prepare_train_dev_data
 from utils import create_vocab_tables, create_vocab_file, get_batch
 
-from model.word_model import Seq2SeqModel
+from model.basic_model import Seq2SeqModel
 import argparse
 import time
 import yaml

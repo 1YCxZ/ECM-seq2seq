@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMStateTuple
+import math
 
 from tensorflow.contrib.seq2seq import tile_batch, BahdanauAttention,\
     BeamSearchDecoder, GreedyEmbeddingHelper, BasicDecoder, dynamic_decode, AttentionWrapper
@@ -23,7 +24,7 @@ class Seq2SeqModel():
                        attn_num_units,
                        dec_num_layers, dec_num_units, dec_cell_type,
                        batch_size, beam_search, beam_size, infer_max_iter,
-                       l2_regularize, learning_rate, max_to_keep=100):
+                       l2_regularize, learning_rate, max_to_keep=100, max_gradient_norm=5.0):
 
         self.mode = mode
         self.model_name = model_name
@@ -41,7 +42,6 @@ class Seq2SeqModel():
         self.dec_num_layers = dec_num_layers
         self.dec_num_units = dec_num_units
         self.dec_cell_type = dec_cell_type
-
         # 杂项
         self.batch_size = batch_size
         self.beam_search = beam_search
@@ -50,6 +50,7 @@ class Seq2SeqModel():
         self.infer_max_iter = infer_max_iter
         self.learning_rate = learning_rate
         self.max_to_keep = max_to_keep
+        self.max_gradient_norm = max_gradient_norm
         # build model
         self.build_model()
 
@@ -75,23 +76,23 @@ class Seq2SeqModel():
 
     def build_model(self):
         print('building model... ...')
-        #=================================1, 定义模型的placeholder
         self.encoder_inputs = tf.placeholder(tf.int32, [None, None], name="encoder_inputs")
         self.decoder_inputs = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
         self.decoder_targets = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
-        self.decoder_targets_masks = tf.placeholder(tf.bool, [None, None], name="mask")
+        self.decoder_targets_masks = tf.placeholder(tf.float32, [None, None], name="mask")
         self.encoder_length = tf.placeholder(tf.int32, [None], name="encoder_length")
         self.decoder_length = tf.placeholder(tf.int32, [None], name="decoder_length")
-        #=================================2, embedding
+        self.max_target_sequence_length = tf.reduce_max(self.decoder_length, name='max_target_len')
+
         with tf.variable_scope('seq2seq_embedding'):
             self.embedding = self.init_embedding(self.vocab_size, self.embedding_size)
-        #=================================3, 定义模型的encoder部分
+
         with tf.variable_scope('seq2seq_encoder'):
             encoder_outputs, encoder_states = build_encoder(
                 self.embedding, self.encoder_inputs, self.encoder_length,
                 self.enc_num_layers, self.enc_num_units, self.enc_cell_type,
                 bidir=self.enc_bidir)
-        # =================================4, 定义模型的decoder部分
+
         with tf.variable_scope('seq2seq_decoder'):
             encoder_length = self.encoder_length
             if self.beam_search:
@@ -101,19 +102,16 @@ class Seq2SeqModel():
                 encoder_states = tile_batch(encoder_states, multiplier=self.beam_size)
                 encoder_length = tile_batch(encoder_length, multiplier=self.beam_size)
 
-            #定义要使用的attention机制。
             attention_mechanism = BahdanauAttention(num_units=self.attn_num_units,
                                                     memory=encoder_outputs,
                                                     memory_sequence_length=encoder_length)
 
-            # 定义decoder阶段要是用的LSTMCell，然后为其封装attention wrapper
             decoder_cell = create_rnn_cell(self.dec_num_layers, self.dec_num_units, self.dec_cell_type)
             decoder_cell = AttentionWrapper(cell=decoder_cell, attention_mechanism=attention_mechanism,
-                                              attention_layer_size=self.dec_num_units, name='MyAttention_Wrapper')
-            #如果使用beam_seach则batch_size = self.batch_size * self.beam_size。因为之前已经复制过一次
+                                              attention_layer_size=self.dec_num_units, name='Attention_Wrapper')
+
             batch_size = self.batch_size if not self.beam_search else self.batch_size * self.beam_size
 
-            #定义decoder阶段的初始化状态，直接使用encoder阶段的最后一个隐层状态进行赋值
             decoder_initial_state = decoder_cell.zero_state(batch_size=batch_size, dtype=tf.float32).clone(cell_state=encoder_states)
 
             output_layer = tf.layers.Dense(self.vocab_size,
@@ -123,38 +121,30 @@ class Seq2SeqModel():
             if self.mode == 'train':
                 decoder_inputs_embedded = tf.nn.embedding_lookup(self.embedding, self.decoder_inputs)
 
-                decoder_outputs, decoder_states = tf.nn.dynamic_rnn(
-                    decoder_cell, decoder_inputs_embedded,
-                    sequence_length=self.decoder_length,
-                    initial_state=decoder_initial_state,
-                    scope='decoder',
-                    dtype=tf.float32,
-                    swap_memory=True)
+                training_helper = tf.contrib.seq2seq.TrainingHelper(inputs=decoder_inputs_embedded,
+                                                                    sequence_length=self.decoder_length,
+                                                                    name='training_helper')
 
-                # 这里加variable_scope是为了配合官方api
-                with tf.variable_scope('decoder'):
-                    train_logits = output_layer(decoder_outputs)
+                training_decoder = tf.contrib.seq2seq.BasicDecoder(cell=decoder_cell,
+                                                                   helper=training_helper,
+                                                                   initial_state=decoder_initial_state,
+                                                                   output_layer=output_layer)
 
-                losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                    logits=train_logits, labels=self.decoder_targets)
+                decoder_outputs, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder=training_decoder,
+                                                                          impute_finished=True,
+                                                                          maximum_iterations=self.max_target_sequence_length)
 
-                losses = tf.boolean_mask(losses, self.decoder_targets_masks)
-                self.reduced_loss = tf.reduce_mean(losses)
-                self.CE = tf.reduce_sum(losses)  # cross entropy
+                self.decoder_logits_train = tf.identity(decoder_outputs.rnn_output)
 
-                if self.l2_regularize is None:
-                    loss = self.reduced_loss
-                else:
-                    l2_loss = tf.add_n([tf.nn.l2_loss(v)
-                                        for v in tf.trainable_variables()
-                                        if not ('bias' in v.name)])
+                self.loss = tf.contrib.seq2seq.sequence_loss(logits=self.decoder_logits_train,
+                                                             targets=self.decoder_targets,
+                                                             weights=self.decoder_targets_masks)
 
-                    total_loss = self.reduced_loss + self.l2_regularize * l2_loss
-                    loss = total_loss
-
-                optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-                trainable = tf.trainable_variables()  # 返回所有可供训练的参数
-                self.train_op = optimizer.minimize(loss, var_list=trainable)
+                optimizer = tf.train.AdamOptimizer(self.learning_rate)
+                trainable_params = tf.trainable_variables()
+                gradients = tf.gradients(self.loss, trainable_params)
+                clip_gradients, _ = tf.clip_by_global_norm(gradients, self.max_gradient_norm)
+                self.train_op = optimizer.apply_gradients(zip(clip_gradients, trainable_params))
 
             elif self.mode == 'infer':
                 start_tokens = tf.ones([self.batch_size, ], tf.int32) * SOS_ID
@@ -197,7 +187,7 @@ class Seq2SeqModel():
             self.encoder_length: batch[4],
             self.decoder_length: batch[5]
         }
-        _, loss = sess.run([self.train_op, self.reduced_loss], feed_dict=feed_dict)
+        _, loss = sess.run([self.train_op, self.loss], feed_dict=feed_dict)
         return loss
 
     def eval(self, sess, batch):
@@ -209,7 +199,7 @@ class Seq2SeqModel():
             self.encoder_length: batch[4],
             self.decoder_length: batch[5]
         }
-        loss = sess.run([self.reduced_loss], feed_dict=feed_dict)
+        loss = sess.run([self.loss], feed_dict=feed_dict)
         return loss
 
     def infer(self, sess, batch):
@@ -230,9 +220,8 @@ class Seq2SeqModel():
             self.encoder_length: batch[4],
             self.decoder_length: batch[5]
         }
-
-        CE_words = sess.run(self.CE, feed_dict=feed_dict)
-        N_words = np.sum(batch[3])
-        return np.exp(CE_words / N_words)
+        loss = sess.run(self.loss, feed_dict=feed_dict)
+        perplexity = math.exp(float(loss))
+        return perplexity
 
 

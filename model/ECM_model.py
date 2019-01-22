@@ -14,7 +14,6 @@ UNK_ID = 1
 SOS_ID = 2
 EOS_ID = 3
 
-
 class ECMModel():
     def __init__(self, mode,
                        model_name,
@@ -24,7 +23,7 @@ class ECMModel():
                        dec_num_layers, dec_num_units, dec_cell_type,
                        emo_cat_emb_size, emo_internal_memory_units, num_emotion,
                        batch_size, beam_search, beam_size, infer_max_iter,
-                       l2_regularize, learning_rate, max_to_keep=100, max_gradient_norm=5.0):
+                       l2_regularize, learning_rate, max_to_keep=100, max_gradient_norm=1.0):
 
         self.mode = mode
         self.model_name = model_name
@@ -173,14 +172,14 @@ class ECMModel():
                                                 helper=training_helper,
                                                 initial_state=decoder_initial_state,
                                                 )
-                # 调用dynamic_decode进行解码，decoder_outputs是一个namedtuple，里面包含两项(rnn_outputs, sample_id)
-                # rnn_output: [batch_size, decoder_targets_length, vocab_size]，保存decode每个时刻每个单词的概率，可以用来计算loss
+
                 self.decoder_outputs, self.final_state, self.final_sequence_length = dynamic_decode(decoder=training_decoder,
                                                                           impute_finished=True,
                                                                           maximum_iterations=self.max_target_sequence_length)
 
                 # 根据输出计算loss和梯度，并定义进行更新的AdamOptimizer和train_op
                 self.decoder_logits_train = tf.identity(self.decoder_outputs.rnn_output)
+
 
                 with tf.variable_scope('decoder'):
                     self.generic_logits = output_layer(self.decoder_logits_train)
@@ -194,6 +193,7 @@ class ECMModel():
 
                 # compute losses
                 self.alphas = tf.squeeze(self.alphas, axis=-1)
+
                 self.g_losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.generic_logits, labels=self.decoder_targets) - tf.log(1 - self.alphas)
 
@@ -205,7 +205,6 @@ class ECMModel():
                 # alpha and internal memory regularizations
                 self.alpha_reg = tf.reduce_mean(self.choice_qs * -tf.log(self.alphas))
                 self.int_mem_reg = tf.reduce_mean(tf.norm(self.int_M_emo + 1e-7, axis=1))
-
                 losses = tf.boolean_mask(losses, self.decoder_targets_masks)
                 self.loss = tf.reduce_mean(losses) + self.alpha_reg + self.int_mem_reg
 
@@ -239,7 +238,7 @@ class ECMModel():
 
                 infer_outputs = decoder_outputs.predicted_ids  # [batch_size, decoder_targets_length, beam_size]
                 self.infer_outputs = tf.transpose(infer_outputs, [0, 2, 1])  # [batch_size, beam_size, decoder_targets_length]
-
+        self.summary_all = tf.summary.merge_all()
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=self.max_to_keep)
 
     def train(self, sess, batch):
@@ -253,8 +252,8 @@ class ECMModel():
             self.choice_qs: batch[6],
             self.emo_cat: batch[7]
         }
-        _, loss = sess.run([self.train_op, self.loss], feed_dict=feed_dict)
-        return loss
+        _, loss, summary = sess.run([self.train_op, self.loss, self.summary_all], feed_dict=feed_dict)
+        return loss, summary
 
     def eval(self, sess, batch):
         feed_dict = {

@@ -340,24 +340,26 @@ def prepare_ecm_infer_data(infer_s_file, infer_emo_cat_file, vocab_table, max_le
 
     infer_data_set = []
     for idx, i in enumerate(src_dataset):
-        infer_data_set.append((src_dataset[idx], category_list[idx]))
-    if target_file is None:
-        return infer_data_set
-    else:
-        tgt_dataset = []
-        for _, line in enumerate(open(target_file, 'r')):
-            word_list = line.strip().decode('utf-8').split(' ')
-            id_list = [vocab_table.get(word, UNK_ID) for word in word_list]
-            tgt_dataset.append(id_list)
-        # 按照长度过滤
-        infer_data_set_f = []
-        tgt_dataset_f = []
-        for idx, line in enumerate(src_dataset):
-            if len(line) >= max_length or len(tgt_dataset[idx]) >= max_length:
-                continue
-            infer_data_set_f.append(infer_data_set[idx])
-            tgt_dataset_f.append(tgt_dataset[idx])
-        return infer_data_set_f, tgt_dataset_f
+        if len(src_dataset[idx]) <= max_length:
+            infer_data_set.append((src_dataset[idx], category_list[idx]))
+
+    # if target_file is None:
+    return infer_data_set
+    # else:
+    #     tgt_dataset = []
+    #     for _, line in enumerate(open(target_file, 'r')):
+    #         word_list = line.strip().decode('utf-8').split(' ')
+    #         id_list = [vocab_table.get(word, UNK_ID) for word in word_list]
+    #         tgt_dataset.append(id_list)
+    #     # 按照长度过滤
+    #     infer_data_set_f = []
+    #     tgt_dataset_f = []
+    #     for idx, line in enumerate(src_dataset):
+    #         if len(line) >= max_length or len(tgt_dataset[idx]) >= max_length:
+    #             continue
+    #         infer_data_set_f.append(infer_data_set[idx])
+    #         tgt_dataset_f.append(tgt_dataset[idx])
+    #     return infer_data_set_f, tgt_dataset_f
 
 
 

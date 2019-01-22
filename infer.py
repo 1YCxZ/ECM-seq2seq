@@ -2,7 +2,7 @@ from utils import get_model_config
 from utils import get_infer_batch, get_infer_config
 from utils import load, prepare_infer_data, create_vocab_tables
 
-from model.word_model import Seq2SeqModel
+from model.basic_model import Seq2SeqModel
 import argparse
 import yaml
 import tensorflow as tf
@@ -76,9 +76,9 @@ def main(args):
 
     init = tf.global_variables_initializer()
     sess.run(init)
-    print('global_variables:\n')
-    glob_var = tf.global_variables()
-    pprint(glob_var)
+    # print('global_variables:\n')
+    # glob_var = tf.global_variables()
+    # pprint(glob_var)
 
     try:
         saved_global_step = load(infer_model.saver, sess, restore_from)
@@ -88,13 +88,6 @@ def main(args):
     except Exception:
         print("Something went wrong while restoring checkpoint. ")
         raise
-
-    # ckpt = tf.train.get_checkpoint_state(restore_from)
-    # if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
-    #     print('Reloading model parameters..')
-    #     infer_model.saver.restore(sess, ckpt.model_checkpoint_path)
-    # else:
-    #     raise ValueError('No such file:[{}]'.format(restore_from))
 
     # ##### Inference #####
     # Load data

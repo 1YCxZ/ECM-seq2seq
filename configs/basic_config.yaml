@@ -2,13 +2,6 @@ configuration:
   Name: basic_seq2seq
   workspace: ./works/sampled_softmax/
   tf_board: ./works/sampled_softmax/tfboard/
-  decoder:
-    attn_num_units: 1024
-    cell_type: LSTM
-    num_layers: 2
-    num_units: 1024
-    state_pass: True
-    infer_max_iter: 25
   embeddings:
     embed_size: 300
     vocab_size: 50000
@@ -16,7 +9,14 @@ configuration:
     bidirectional: True
     cell_type: LSTM
     num_layers: 2
-    num_units: 1024
+    num_units: 512
+  decoder:
+    attn_num_units: 512
+    cell_type: LSTM
+    num_layers: 2
+    num_units: 512
+    state_pass: True
+    infer_max_iter: 25
   inference:
     is_beam_search: True
     beam_size: 5

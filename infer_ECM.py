@@ -19,11 +19,20 @@ import utils
 #     4: 'Anger',
 #     5: 'Happiness'
 # }
+
 p_map = {
     0: 'other',
     1: 'pos',
     2: 'neg',
 }
+
+# p_map = {
+#     0: 'no',
+#     1: 'happy',
+#     2: 'angry',
+#     3: 'sad',
+#     4: 'surprise',
+# }
 
 def parse_args():
     '''
@@ -58,7 +67,7 @@ def main(args):
     print("Initializing embeddings ...")
     vocab_size = config["embeddings"]["vocab_size"]
     embed_size = config["embeddings"]["embed_size"]
-    vocab_file = '%s/data_debug/%s-%s' % (work_space, "vocab", vocab_size)
+    vocab_file = '%s/data/%s-%s' % (work_space, "vocab", vocab_size)
     print("\tDone.")
 
     (enc_num_layers, enc_num_units, enc_cell_type, enc_bidir,
@@ -93,7 +102,7 @@ def main(args):
 
     init = tf.global_variables_initializer()
     sess.run(init)
-    print('global_variables:\n')
+    # print('global_variables:\n')
     # glob_var = tf.global_variables()
     # pprint(glob_var)
     # model_path = '%s/model.ckpt-53000' % restore_from
@@ -106,13 +115,6 @@ def main(args):
     except Exception:
         print("Something went wrong while restoring checkpoint. ")
         raise
-
-    # ckpt = tf.train.get_checkpoint_state(restore_from)
-    # if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
-    #     print('Reloading model parameters..')
-    #     infer_model.saver.restore(sess, ckpt.model_checkpoint_path)
-    # else:
-    #     raise ValueError('No such file:[{}]'.format(restore_from))
 
     # ##### Inference #####
     # Load data
