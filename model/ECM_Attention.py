@@ -1,4 +1,20 @@
 # -*- coding: utf-8 -*-
+# Copyright 2017 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+
 import collections
 import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMStateTuple
@@ -15,7 +31,6 @@ from tensorflow.python.util import nest
 
 _zero_state_tensors = rnn_cell_impl._zero_state_tensors
 
-#TODO: attention文件中完全采用tf原版wrapper，如需修改额外步骤就在call()方法中修改
 
 class ECMWrapperState(
     collections.namedtuple("ECMWrapperState",
@@ -54,7 +69,6 @@ class ECMWrapperState(
 class ECMWrapper(rnn_cell_impl.RNNCell):
     """Wraps another `RNNCell` with attention.
     """
-
     def __init__(self,
                  cell,
                  attention_mechanism,
@@ -190,21 +204,17 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
         self._cell_input_fn = cell_input_fn
         self._output_attention = output_attention
         self._alignment_history = alignment_history
-
+        # ==================================================================
         # ECM hyperparameters
-        self._emo_cat_embs = emo_cat_embs
-        self._emo_cat = emo_cat
-        self._emo_internal_memory_units = emo_internal_memory_units
+        self._emo_cat_embs = emo_cat_embs  # 传入ecm的外部情感embedding
+        self._emo_cat = emo_cat  # 传入ecm的外部情感类别
+        self._emo_internal_memory_units = emo_internal_memory_units  # 内部情感memory num units
         # ECM internal memory
-        self._emo_internal_memory_embedding = emo_internal_memory_embedding
+        self._emo_internal_memory_embedding = emo_internal_memory_embedding  # 内部情感memory的embedding table
 
-
-
-        self.read_g = read_gate
-
-        self.write_g = write_gate
-
-
+        self.read_g = read_gate  # ecm中的read_gate
+        self.write_g = write_gate  # ecm中的write_gate
+        # ==================================================================
         with ops.name_scope(name, "AttentionWrapperInit"):
             if initial_cell_state is None:
                 self._initial_cell_state = None
@@ -266,7 +276,9 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
             cell_state=self._cell.state_size,
             time=tensor_shape.TensorShape([]),
             attention=self._attention_layer_size,
-            internal_memory=self._emo_internal_memory_units,
+            # ==============================================
+            internal_memory=self._emo_internal_memory_units,  # 返回内部情感memory的size
+            # ==============================================
             alignments=self._item_or_tuple(
                 a.alignments_size for a in self._attention_mechanisms),
             alignment_history=self._item_or_tuple(
@@ -307,16 +319,14 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
                     lambda s: array_ops.identity(s, name="checked_cell_state"),
                     cell_state)
 
-            # TODO: 这里有问题，一个batch中不同的emo_cat，beamsearch的时候的要复制5份
-
-            M_emo_0 = tf.gather(self._emo_internal_memory_embedding, self._emo_cat)
-
+            # =====================================================================
+            M_emo_0 = tf.gather(self._emo_internal_memory_embedding, self._emo_cat)  # 内部情感memory的初始化
             return ECMWrapperState(
                 cell_state=cell_state,
                 time=array_ops.zeros([], dtype=dtypes.int32),
                 attention=_zero_state_tensors(self._attention_layer_size, batch_size,
                                               dtype),
-                internal_memory=M_emo_0,
+                internal_memory=M_emo_0,  # 内部情感memory的初始化
                 alignments=self._item_or_tuple(
                     attention_mechanism.initial_alignments(batch_size, dtype)
                     for attention_mechanism in self._attention_mechanisms),
@@ -325,6 +335,7 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
                                                  dynamic_size=True)
                     if self._alignment_history else ()
                     for _ in self._attention_mechanisms))
+            # ======================================================================
 
     def _read_internal_memory(self, M_emo, read_inputs):
         """
@@ -336,6 +347,7 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
         """
         gate_read = tf.nn.sigmoid(self.read_g(read_inputs))
         return M_emo * gate_read
+
 
     def _write_internal_memory(self, M_emo, new_cell_state):
         """
@@ -380,18 +392,17 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
 
         # Step 1: Calculate the true inputs to the cell based on the
         # previous attention value.
-
-        r_cell_state = state.cell_state
-        r_cell_state = r_cell_state[-1]  # 取最后一层的状态
-        if isinstance(r_cell_state, LSTMStateTuple):
+        # =====================================================================
+        r_cell_state = state.cell_state  # 首先取出上一个状态中的cell_state
+        r_cell_state = r_cell_state[-1]  # 取cell_state的最后一层的状态
+        if isinstance(r_cell_state, LSTMStateTuple):  # 如果是lstm就将c和h拼接起来
             print('read_gate concat LSTMState C and H')
             r_cell_state = tf.concat([r_cell_state.c, r_cell_state.h], axis=-1)
 
-        read_inputs = tf.concat([inputs, r_cell_state, state.attention], axis=-1)
-        M_read = self._read_internal_memory(state.internal_memory, read_inputs)
+        read_inputs = tf.concat([inputs, r_cell_state, state.attention], axis=-1)  # internal_memory的read_gate inputs
+        M_read = self._read_internal_memory(state.internal_memory, read_inputs)  # internal_memory的读取过程
 
-        # cell_inputs = self._cell_input_fn(inputs, state.attention)
-        cell_inputs = tf.concat([inputs, state.attention, self._emo_cat_embs, M_read], axis=-1)
+        cell_inputs = tf.concat([inputs, state.attention, self._emo_cat_embs, M_read], axis=-1)  # 当前时序rnn_cell的输入
         cell_state = state.cell_state
         cell_output, next_cell_state = self._cell(cell_inputs, cell_state)
 
@@ -399,8 +410,8 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
         if isinstance(next_cell_state_to_write, LSTMStateTuple):
             print('write gate concat LSTMState C and H')
             next_cell_state_to_write = tf.concat([next_cell_state_to_write.c, next_cell_state_to_write.h], axis=-1)
-        new_M_emo = self._write_internal_memory(state.internal_memory, next_cell_state_to_write)
-
+        new_M_emo = self._write_internal_memory(state.internal_memory, next_cell_state_to_write)  # internal_memory的写入过程
+        # =======================================================================
         cell_batch_size = (
             cell_output.shape[0].value or array_ops.shape(cell_output)[0])
         error_message = (
@@ -438,7 +449,8 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
 
         attention = array_ops.concat(all_attentions, 1)
 
-
+        # ========================================================
+        # 新的状态传递给下一个时序
         next_state = ECMWrapperState(
             time=state.time + 1,
             cell_state=next_cell_state,
@@ -446,7 +458,7 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
             internal_memory=new_M_emo,
             alignments=self._item_or_tuple(all_alignments),
             alignment_history=self._item_or_tuple(all_histories))
-
+        # =========================================================
         if self._output_attention:
             return attention, next_state
         else:

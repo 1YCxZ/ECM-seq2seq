@@ -151,9 +151,8 @@ def main(args):
 
             batch = get_ecm_train_batch(train_set, max_length, batch_size)
 
-            loss_value, merged_summary = ecm_model.train(sess, batch)
-            train_writer.add_summary(merged_summary, step)
-            add_summary(train_writer, step, 'train loss', loss_value)
+            loss_value = ecm_model.train(sess, batch)
+
             duration = (time.time() - start_time)
             if step % print_every == 0 and step != 0:
                 # train perplexity

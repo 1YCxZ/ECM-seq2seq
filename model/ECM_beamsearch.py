@@ -205,10 +205,10 @@ class ECMBeamSearchDecoder(decoder.Decoder):
             raise TypeError(
                 "output_layer must be a Layer, received: %s" % type(output_layer))
         self._cell = cell
-        self._output_layer = output_layer
+        self._output_layer = output_layer  # 普通词典projection
         # ECM output layer
-        self._emo_output_layer = emo_output_layer
-        self._emo_choice_layer = emo_choice_layer
+        self._emo_output_layer = emo_output_layer  # 情感词典projection
+        self._emo_choice_layer = emo_choice_layer  # 选择情感词概率的 projection，输出(0,1)之间的概率
 
         if callable(embedding):
             self._embedding_fn = embedding
@@ -439,6 +439,7 @@ class ECMBeamSearchDecoder(decoder.Decoder):
         else:
             return t
 
+
     def step(self, time, inputs, state, name=None):
         """Perform a decoding step.
 
@@ -464,33 +465,28 @@ class ECMBeamSearchDecoder(decoder.Decoder):
                 self._maybe_merge_batch_beams,
                 cell_state, self._cell.state_size)
 
-            cell_outputs, next_cell_state = self._cell(inputs, cell_state)
+            cell_outputs, next_cell_state = self._cell(inputs, cell_state)  # 得到当前时序的cell_outputs和next_cell_state
+            # ======================================================================
+            gen_log_probs = tf.nn.log_softmax(self._output_layer(cell_outputs))  # 得到普通词的概率分布
+            emo_log_probs = tf.nn.log_softmax(self._emo_output_layer(cell_outputs))  # 得到情感词的概率分布
+            alphas = tf.nn.sigmoid(self._emo_choice_layer(cell_outputs))  # 得到选择情感词的概率
 
-            gen_log_probs = tf.nn.log_softmax(self._output_layer(cell_outputs))
-            emo_log_probs = tf.nn.log_softmax(self._emo_output_layer(cell_outputs))
-            alphas = tf.nn.sigmoid(self._emo_choice_layer(cell_outputs))
+            gen_log_probs = gen_log_probs + tf.log(1 - alphas)  # 对普通词的概率分布按照选择情感词的概率进行修正
+            emo_log_probs = emo_log_probs + tf.log(alphas)  # 对情感词的概率分布按照选择情感词的概率进行修正
+            raw_log_probs = tf.concat([gen_log_probs, emo_log_probs], axis=-1)  # 这里拼接后得到2 * vocab_size的概率分布
 
-            gen_log_probs = gen_log_probs + tf.log(1 - alphas)
-            emo_log_probs = emo_log_probs + tf.log(alphas)
-            raw_log_probs = tf.concat([gen_log_probs, emo_log_probs], axis=-1)
-
-            raw_log_probs = self._split_batch_beams(raw_log_probs, raw_log_probs.shape[1:])
-
-            cell_outputs = nest.map_structure(
-                lambda out: self._split_batch_beams(out, out.shape[1:]), cell_outputs)
+            raw_log_probs = self._split_batch_beams(raw_log_probs, raw_log_probs.shape[1:])  # [batch_size*beam_width, s] -> [batch_size, beam_width, s]
+            # ======================================================================
             next_cell_state = nest.map_structure(
                 self._maybe_split_batch_beams,
                 next_cell_state, self._cell.state_size)
 
-            if self._output_layer is not None:
-                cell_outputs = self._output_layer(cell_outputs)
-
-            real_vocab_size = gen_log_probs.shape[-1].value
+            real_vocab_size = gen_log_probs.shape[-1].value  # 真实的词典大小
 
             beam_search_output, beam_search_state = _beam_search_step(
-                real_vocab_size=real_vocab_size,
+                real_vocab_size=real_vocab_size,  # 传入真实的词典大小
                 time=time,
-                logits=raw_log_probs,
+                logits=raw_log_probs,  # 这里的logits为raw_log_probs,
                 next_cell_state=next_cell_state,
                 beam_state=state,
                 batch_size=batch_size,
@@ -557,7 +553,7 @@ def _beam_search_step(real_vocab_size, time, logits, next_cell_state, beam_state
     new_prediction_lengths = (
         lengths_to_add + array_ops.expand_dims(prediction_lengths, 2))
 
-    # 根据长度乘法重新计算每个序列的分数Calculate the scores for each beam
+    # Calculate the scores for each beam
     scores = _get_scores(
         log_probs=total_probs,
         sequence_lengths=new_prediction_lengths,
@@ -602,9 +598,9 @@ def _beam_search_step(real_vocab_size, time, logits, next_cell_state, beam_state
                                      name="next_beam_word_ids")
 
     next_word_ids = math_ops.to_int32(raw_next_word_ids)
-
-    next_word_ids = next_word_ids % real_vocab_size
-
+    # ==============================================
+    next_word_ids = next_word_ids % real_vocab_size  # 这里得到下标是2* vocab_size的下标，所以要进行取模操作得到真正的下标
+    # ==============================================
     next_beam_ids = math_ops.to_int32(word_indices / vocab_size,
                                       name="next_beam_parent_ids")
 

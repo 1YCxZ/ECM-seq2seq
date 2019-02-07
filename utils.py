@@ -240,9 +240,7 @@ def create_vocab_tables(vocab_file):
 def prepare_train_dev_data(train_s_file, train_t_file,
                             dev_s_file, dev_t_file,
                             vocab_table, max_length, ):
-    """
-    字符转token
-    """
+
     def readfile(file_path):
         data = []
         for _, line in enumerate(open(file_path, 'r')):
@@ -275,9 +273,7 @@ def prepare_ecm_train_dev_data(train_s_file, train_t_file,
                                dev_s_file, dev_t_file,
                                dev_choice_file, dev_category_file,
                                vocab_table, max_length, ):
-    """
-    字符转token
-    """
+
     def readfile(file_path):
         data = []
         for _, line in enumerate(open(file_path, 'r')):
@@ -326,7 +322,7 @@ def prepare_infer_data(infer_data_file, vocab_table, max_length):
     return np.array(src_dataset)
 
 
-def prepare_ecm_infer_data(infer_s_file, infer_emo_cat_file, vocab_table, max_length, target_file=None):
+def prepare_ecm_infer_data(infer_s_file, infer_emo_cat_file, vocab_table, max_length):
     src_dataset = []
     for _, line in enumerate(open(infer_s_file, 'r')):
         word_list = line.strip().decode('utf-8').split(' ')
@@ -343,45 +339,10 @@ def prepare_ecm_infer_data(infer_s_file, infer_emo_cat_file, vocab_table, max_le
         if len(src_dataset[idx]) <= max_length:
             infer_data_set.append((src_dataset[idx], category_list[idx]))
 
-    # if target_file is None:
     return infer_data_set
-    # else:
-    #     tgt_dataset = []
-    #     for _, line in enumerate(open(target_file, 'r')):
-    #         word_list = line.strip().decode('utf-8').split(' ')
-    #         id_list = [vocab_table.get(word, UNK_ID) for word in word_list]
-    #         tgt_dataset.append(id_list)
-    #     # 按照长度过滤
-    #     infer_data_set_f = []
-    #     tgt_dataset_f = []
-    #     for idx, line in enumerate(src_dataset):
-    #         if len(line) >= max_length or len(tgt_dataset[idx]) >= max_length:
-    #             continue
-    #         infer_data_set_f.append(infer_data_set[idx])
-    #         tgt_dataset_f.append(tgt_dataset[idx])
-    #     return infer_data_set_f, tgt_dataset_f
 
 
-
-def get_infer_batch(src_dataset, start, end, max_length):
-    encoder_inputs = []
-    encoder_length = []
-    batch_data = src_dataset[start: end]
-    for id_list in batch_data:
-        length = len(id_list)
-        # padding with EOS token
-        pads = PAD_ID * np.ones(max_length - length, dtype=np.int32)
-        encoder_input = np.concatenate([id_list, pads])
-        encoder_inputs.append(encoder_input)
-        encoder_length.append(length)
-
-    encoder_inputs = np.array(encoder_inputs)
-    encoder_length = np.array(encoder_length)
-
-    return encoder_inputs, encoder_length
-
-
-def get_batch(dataset, max_length, batch_size):
+def get_train_batch(dataset, max_length, batch_size):
 
     encoder_inputs, decoder_inputs, decoder_targets, decoder_targets_masks,\
     encoder_length, decoder_length = [], [], [], [], [], []
@@ -425,6 +386,24 @@ def get_batch(dataset, max_length, batch_size):
     decoder_length = np.array(decoder_length)
 
     return encoder_inputs, decoder_inputs, decoder_targets, decoder_targets_masks, encoder_length, decoder_length
+
+
+def get_infer_batch(src_dataset, start, end, max_length):
+    encoder_inputs = []
+    encoder_length = []
+    batch_data = src_dataset[start: end]
+    for id_list in batch_data:
+        length = len(id_list)
+        # padding with EOS token
+        pads = PAD_ID * np.ones(max_length - length, dtype=np.int32)
+        encoder_input = np.concatenate([id_list, pads])
+        encoder_inputs.append(encoder_input)
+        encoder_length.append(length)
+
+    encoder_inputs = np.array(encoder_inputs)
+    encoder_length = np.array(encoder_length)
+
+    return encoder_inputs, encoder_length
 
 
 def get_ecm_train_batch(dataset, max_length, batch_size):

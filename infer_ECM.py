@@ -20,19 +20,19 @@ import utils
 #     5: 'Happiness'
 # }
 
-p_map = {
-    0: 'other',
-    1: 'pos',
-    2: 'neg',
-}
-
 # p_map = {
-#     0: 'no',
-#     1: 'happy',
-#     2: 'angry',
-#     3: 'sad',
-#     4: 'surprise',
+#     0: 'other',
+#     1: 'pos',
+#     2: 'neg',
 # }
+
+p_map = {
+    0: 'no',
+    1: 'happy',
+    2: 'angry',
+    3: 'sad',
+    4: 'surprise',
+}
 
 def parse_args():
     '''
@@ -105,8 +105,8 @@ def main(args):
     # print('global_variables:\n')
     # glob_var = tf.global_variables()
     # pprint(glob_var)
-    # model_path = '%s/model.ckpt-53000' % restore_from
 
+    # model_path = '%s/model.ckpt-67000' % restore_from
     try:
         saved_global_step = load(ecm_model.saver, sess, restore_from)
         if saved_global_step is None:
@@ -137,7 +137,6 @@ def main(args):
         batch = get_ecm_infer_batch(src_dataset, start, end, infer_source_max_length)
 
         sentence = token_to_str(batch[0][0], reverse_vocab_table)
-        # target = token_to_str(tgt_dataset[ith], reverse_vocab_table)
         emo_category = p_map[batch[2][0]]
 
         start_time = time.time()
@@ -145,7 +144,6 @@ def main(args):
         duration =round((time.time() - start_time), 3)
         print("sentence:%s, cost:%s s" % (ith, duration))
 
-        # res = "src:{}  emotion:{}\ntgt:{}\n".format(sentence, emo_category, target)
         res = "src:{}  emotion:{}\n".format(sentence, emo_category)
         if is_beam_search is True:
             for idx, i in enumerate(result[0][0]):

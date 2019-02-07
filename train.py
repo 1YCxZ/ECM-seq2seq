@@ -4,16 +4,15 @@ from __future__ import print_function
 from utils import get_model_config
 from utils import get_training_config
 from utils import load, save, prepare_train_dev_data
-from utils import create_vocab_tables, create_vocab_file, get_batch
+from utils import create_vocab_tables, create_vocab_file, get_train_batch
 
 from model.basic_model import Seq2SeqModel
 import argparse
 import time
 import yaml
 import tensorflow as tf
-import numpy as np
 import os
-from datetime import datetime
+
 
 
 def setup_workpath(workspace):
@@ -143,7 +142,7 @@ def main(args):
         for step in range(saved_global_step + 1, num_steps):
             start_time = time.time()
 
-            batch = get_batch(train_set, max_length, batch_size)
+            batch = get_train_batch(train_set, max_length, batch_size)
 
             loss_value = train_model.train(sess, batch)
 
@@ -157,7 +156,7 @@ def main(args):
                 # eval perplexity
                 dev_str = ""
                 if dev_set is not None:
-                    eval_batch = get_batch(dev_set, max_length, batch_size)
+                    eval_batch = get_train_batch(dev_set, max_length, batch_size)
 
                     eval_perp = train_model.compute_perplexity(sess, eval_batch)
                     add_summary(test_writer, step, 'eval perplexity', eval_perp)

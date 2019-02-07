@@ -1,7 +1,7 @@
 configuration:
   Name: EmotionChattingMachine
-  workspace: ./works/baidu_ecm/
-  tf_board: ./works/baidu_ecm/tfboard/
+  workspace: ./works/example/
+  tf_board: ./works/example/tfboard/
   embeddings:
     embed_size: 300
     vocab_size: 40000
@@ -19,33 +19,33 @@ configuration:
     infer_max_iter: 25
     emo_cat_emb_size: 256
     emo_internal_memory_units: 256
-    num_emotion: 3
+    num_emotion: 5
   inference:
     is_beam_search: True
     beam_size: 5
     infer_batch_size: 1
-    infer_source_file: ./works/baidu_ecm/data/xs_1_test.txt
-    infer_target_file: ./works/baidu_ecm/data/dev_target.txt
-    infer_emotion_category_file: ./works/baidu_ecm/data/xs_test_pos.txt
+    infer_source_file: ./works/example/data/dev_source.txt
+    infer_target_file: ./works/example/data/dev_target.txt
+    infer_emotion_category_file: ./works/example/data/dev_category.txt
     infer_source_max_length: 25
-    output_path: ./works/baidu_ecm/results/xs_test_pos.txt
-    output_choice_path: ./works/baidu_ecm/results/ECM_choice.txt
+    output_path: ./works/example/results/dev_prediction.txt
+    output_choice_path: ./works/example/results/ECM_choice.txt
   training:
     batch_size: 64
     checkpoint_every: 1000
-    train_source_file: ./works/mix_data_ecm/data/train_source.txt
-    train_target_file: ./works/mix_data_ecm/data/train_target.txt
-    train_choice_file: ./works/mix_data_ecm/data/train_choice.txt
-    train_category_file: ./works/mix_data_ecm/data/train_category.txt
-    dev_source_file: ./works/mix_data_ecm/data/dev_source.txt
-    dev_target_file: ./works/mix_data_ecm/data/dev_target.txt
-    dev_choice_file: ./works/mix_data_ecm/data/dev_choice.txt
-    dev_category_file: ./works/mix_data_ecm/data/dev_category.txt
+    train_source_file: ./works/example/data/train_source.txt
+    train_target_file: ./works/example/data/train_target.txt
+    train_choice_file: ./works/example/data/train_choice.txt
+    train_category_file: ./works/example/data/train_category.txt
+    dev_source_file: ./works/example/data/dev_source.txt
+    dev_target_file: ./works/example/data/dev_target.txt
+    dev_choice_file: ./works/example/data/dev_choice.txt
+    dev_category_file: ./works/example/data/dev_category.txt
     max_length: 25
     gpu_fraction: 0.8
-    gpu_id: '6'
+    gpu_id: '7'
     l2_regularize: null
-    learning_rate: 0.001
+    learning_rate: 0.0001
     max_checkpoints: 100
     print_every: 200
     train_steps: 1000000

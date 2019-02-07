@@ -3,7 +3,7 @@ import tensorflow as tf
 import math
 
 from tensorflow.contrib.seq2seq import tile_batch, BahdanauAttention,\
-    GreedyEmbeddingHelper, BasicDecoder, dynamic_decode,TrainingHelper
+    BasicDecoder, dynamic_decode,TrainingHelper
 from ECM_Attention import ECMWrapper
 from encoder import build_encoder
 from cell import create_rnn_cell
@@ -79,16 +79,17 @@ class ECMModel():
 
     def build_model(self):
         print('building model... ...')
-        self.encoder_inputs = tf.placeholder(tf.int32, [None, None], name="encoder_inputs")
-        self.decoder_inputs = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
-        self.decoder_targets = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
-        self.decoder_targets_masks = tf.placeholder(tf.bool, [None, None], name="mask")
-        self.encoder_length = tf.placeholder(tf.int32, [None], name="encoder_length")
-        self.decoder_length = tf.placeholder(tf.int32, [None], name="decoder_length")
-        # ECM placeholder
-        self.choice_qs = tf.placeholder(tf.float32, [None, None], name="choice")
-        self.emo_cat = tf.placeholder(tf.int32, [None], name="emotion_category")
-        self.max_target_sequence_length = tf.reduce_max(self.decoder_length, name='max_target_len')
+        with tf.variable_scope('seq2seq_placeholder'):
+            self.encoder_inputs = tf.placeholder(tf.int32, [None, None], name="encoder_inputs")
+            self.decoder_inputs = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
+            self.decoder_targets = tf.placeholder(tf.int32, [None, None], name="decoder_targets")
+            self.decoder_targets_masks = tf.placeholder(tf.bool, [None, None], name="mask")
+            self.encoder_length = tf.placeholder(tf.int32, [None], name="encoder_length")
+            self.decoder_length = tf.placeholder(tf.int32, [None], name="decoder_length")
+            # ECM placeholder
+            self.choice_qs = tf.placeholder(tf.float32, [None, None], name="choice")
+            self.emo_cat = tf.placeholder(tf.int32, [None], name="emotion_category")
+            self.max_target_sequence_length = tf.reduce_max(self.decoder_length, name='max_target_len')
 
         with tf.variable_scope('seq2seq_embedding'):
             self.embedding = self.init_embedding(self.vocab_size, self.embedding_size)
@@ -152,40 +153,39 @@ class ECMModel():
 
             output_layer = tf.layers.Dense(self.vocab_size,
                                            use_bias=False,
-                                           name='output_projection')
+                                           name='output_projection')  # 普通词典projection
 
             # ECM external memory module
             emo_output_layer = tf.layers.Dense(
-                self.vocab_size, use_bias=False, name="emo_output_projection")
+                self.vocab_size, use_bias=False, name="emo_output_projection")  # 情感词典projection
 
             emo_choice_layer = tf.layers.Dense(
-                1, use_bias=False, name="emo_choice_alpha")
+                1, use_bias=False, name="emo_choice_alpha")  # 选择情感词概率projection
 
             if self.mode == 'train':
                 decoder_inputs_embedded = tf.nn.embedding_lookup(self.embedding, self.decoder_inputs)
-
+                # training helper的作用就是决定下一个时序的decoder的输入为给定的decoder inputs, 而不是上一个时刻的输出
                 training_helper = TrainingHelper(inputs=decoder_inputs_embedded,
                                                  sequence_length=self.decoder_length,
                                                  name='training_helper')
 
                 training_decoder = BasicDecoder(cell=decoder_cell,
                                                 helper=training_helper,
-                                                initial_state=decoder_initial_state,
-                                                )
+                                                initial_state=decoder_initial_state)
 
-                self.decoder_outputs, self.final_state, self.final_sequence_length = dynamic_decode(decoder=training_decoder,
+                self.decoder_outputs, self.final_state, self.final_sequence_length = dynamic_decode(
+                                                                          decoder=training_decoder,
                                                                           impute_finished=True,
                                                                           maximum_iterations=self.max_target_sequence_length)
 
-                # 根据输出计算loss和梯度，并定义进行更新的AdamOptimizer和train_op
                 self.decoder_logits_train = tf.identity(self.decoder_outputs.rnn_output)
 
 
                 with tf.variable_scope('decoder'):
-                    self.generic_logits = output_layer(self.decoder_logits_train)
-                    self.emo_ext_logits = emo_output_layer(self.decoder_logits_train)
-                    self.alphas = tf.nn.sigmoid(emo_choice_layer(self.decoder_logits_train))
-                    self.int_M_emo = self.final_state.internal_memory
+                    self.generic_logits = output_layer(self.decoder_logits_train)  # 得到普通词的概率分布logits
+                    self.emo_ext_logits = emo_output_layer(self.decoder_logits_train)  # 得到情感词的概率分布logits
+                    self.alphas = tf.nn.sigmoid(emo_choice_layer(self.decoder_logits_train))  # 得到选择情感词的概率
+                    self.int_M_emo = self.final_state.internal_memory  # internal_memory的最终状态
 
                 g_probs = tf.nn.softmax(self.generic_logits) * (1 - self.alphas)
                 e_probs = tf.nn.softmax(self.emo_ext_logits) * self.alphas
@@ -237,8 +237,8 @@ class ECMModel():
                 decoder_outputs, _, _ = dynamic_decode(decoder=inference_decoder, maximum_iterations=self.infer_max_iter)
 
                 infer_outputs = decoder_outputs.predicted_ids  # [batch_size, decoder_targets_length, beam_size]
-                self.infer_outputs = tf.transpose(infer_outputs, [0, 2, 1])  # [batch_size, beam_size, decoder_targets_length]
-        self.summary_all = tf.summary.merge_all()
+                self.infer_outputs = tf.transpose(infer_outputs, [0, 2, 1], name='infer_outputs')  # [batch_size, beam_size, decoder_targets_length]
+
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=self.max_to_keep)
 
     def train(self, sess, batch):
@@ -252,8 +252,8 @@ class ECMModel():
             self.choice_qs: batch[6],
             self.emo_cat: batch[7]
         }
-        _, loss, summary = sess.run([self.train_op, self.loss, self.summary_all], feed_dict=feed_dict)
-        return loss, summary
+        _, loss = sess.run([self.train_op, self.loss], feed_dict=feed_dict)
+        return loss
 
     def eval(self, sess, batch):
         feed_dict = {

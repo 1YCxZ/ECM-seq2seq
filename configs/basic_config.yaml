@@ -1,7 +1,7 @@
 configuration:
   Name: basic_seq2seq
-  workspace: ./works/sampled_softmax/
-  tf_board: ./works/sampled_softmax/tfboard/
+  workspace: ./works/example/
+  tf_board: ./works/example/tfboard/
   embeddings:
     embed_size: 300
     vocab_size: 50000
@@ -21,16 +21,16 @@ configuration:
     is_beam_search: True
     beam_size: 5
     infer_batch_size: 1
-    infer_source_file: ./works/sampled_softmax/data/dev_source.txt
+    infer_source_file: ./works/example/data/dev_source.txt
     infer_source_max_length: 25
-    output_path: ./works/sampled_softmax/results/prediciton.txt
+    output_path: ./works/example/results/prediciton.txt
   training:
     batch_size: 64
     checkpoint_every: 1000
-    train_source_file: ./works/sampled_softmax/data/train_source.txt
-    train_target_file: ./works/sampled_softmax/data/train_target.txt
-    dev_source_file: ./works/sampled_softmax/data/dev_source.txt
-    dev_target_file: ./works/sampled_softmax/data/dev_target.txt
+    train_source_file: ./works/example/data/train_source.txt
+    train_target_file: ./works/example/data/train_target.txt
+    dev_source_file: ./works/example/data/dev_source.txt
+    dev_target_file: ./works/example/data/dev_target.txt
     max_length: 25
     gpu_fraction: 0.5
     gpu_id: '6'

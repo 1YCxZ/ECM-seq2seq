@@ -76,13 +76,14 @@ class Seq2SeqModel():
 
     def build_model(self):
         print('building model... ...')
-        self.encoder_inputs = tf.placeholder(tf.int32, [None, None], name="encoder_inputs")
-        self.decoder_inputs = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
-        self.decoder_targets = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
-        self.decoder_targets_masks = tf.placeholder(tf.float32, [None, None], name="mask")
-        self.encoder_length = tf.placeholder(tf.int32, [None], name="encoder_length")
-        self.decoder_length = tf.placeholder(tf.int32, [None], name="decoder_length")
-        self.max_target_sequence_length = tf.reduce_max(self.decoder_length, name='max_target_len')
+        with tf.variable_scope('seq2seq_placeholder'):
+            self.encoder_inputs = tf.placeholder(tf.int32, [None, None], name="encoder_inputs")
+            self.decoder_inputs = tf.placeholder(tf.int32, [None, None], name="decoder_inputs")
+            self.decoder_targets = tf.placeholder(tf.int32, [None, None], name="decoder_targets")
+            self.decoder_targets_masks = tf.placeholder(tf.float32, [None, None], name="mask")
+            self.encoder_length = tf.placeholder(tf.int32, [None], name="encoder_length")
+            self.decoder_length = tf.placeholder(tf.int32, [None], name="decoder_length")
+            self.max_target_sequence_length = tf.reduce_max(self.decoder_length, name='max_target_len')
 
         with tf.variable_scope('seq2seq_embedding'):
             self.embedding = self.init_embedding(self.vocab_size, self.embedding_size)
