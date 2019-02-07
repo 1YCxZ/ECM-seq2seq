@@ -19,6 +19,12 @@ chinese Emotional Conversation Generation (CECG) Subtask
 http://coai.cs.tsinghua.edu.cn/hml/challenge/dataset_description/
 这个数据集已经将情感分类好了，所以不需要额外的一个情感分类器去做标注，不过主办方推荐你去训练一个更好的分类器。
 
+## Sample data
+- category: target sentence emotion category
+- choice: target sentence emotional word annotation
+- source: source sentence
+- target: target sentence
+
 ## Results
 I use the corpus I crawled from BaiDu Tieba, including 3 emotion types:
 no: 321052
@@ -85,7 +91,6 @@ src:你 好像 只是 个 备胎  emotion:no
 ```
 
 ```
-用粗鄙之语测试一下 (滑稽
 src:我 是 你 爹  emotion:other
         pred 0:我 是 你 爹 我 是 你 爹 的 孙子 </s> </s>
         pred 1:我 是 你 爹 我 是 你 爹 的 孙子 </s>
