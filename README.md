@@ -8,28 +8,22 @@ Thanks to https://github.com/AaronYALai/Seq2seqAttn_ECM, I learn a lot from this
 However, I can't get a satisfactory results on the chinese corpus when I use AaronYALai's model.
 So, I implement a new ECM model based on the [tensorflow seq2seq API](https://tensorflow.google.cn/api_docs/python/tf/contrib/seq2seq).
 
-## requirements
+## Requirements
 - python 2.7
 - tensorflow >= 1.4
 
-## Dataset
-NTCIR
-Short Text Conversation Task(STC-3)
-chinese Emotional Conversation Generation (CECG) Subtask
-http://coai.cs.tsinghua.edu.cn/hml/challenge/dataset_description/
-这个数据集已经将情感分类好了，所以不需要额外的一个情感分类器去做标注，不过主办方推荐你去训练一个更好的分类器。
-
 ## Sample data
+sample data here is only for showing the data format, not for training.
 - category: target sentence emotion category
 - choice: target sentence emotional word annotation
 - source: source sentence
 - target: target sentence
 
-## Results
-I use the corpus I crawled from BaiDu Tieba, including 3 emotion types:
-no: 321052
-pos: 137086
-neg: 240233
+## Model performance
+The following result is based on the dataset I crawled from BaiDu Tieba, including 3 emotion types:
+- no emotion: 321052
+- pos emotion: 137086
+- neg emotion: 240233
 
 ##### Parameters:
   ```
@@ -52,7 +46,7 @@ neg: 240233
      emo_internal_memory_units: 256
      num_emotion: 3
   ```
-##### training perplexity
+##### Training perplexity
 ![Image text](./training_perplexity.png)
 
 #### Infer Results
@@ -115,3 +109,10 @@ src:我 是 你 爹  emotion:neg
         pred 4:傻 逼 玩意 , 你 是 猴子 派来 的 吗 </s>
 
 ```
+
+## Extra dataset
+NTCIR
+Short Text Conversation Task(STC-3)
+chinese Emotional Conversation Generation (CECG) Subtask
+http://coai.cs.tsinghua.edu.cn/hml/challenge/dataset_description/
+这个数据集已经将情感分类好了，所以不需要额外的一个情感分类器去做标注，不过主办方推荐你去训练一个更好的分类器。
