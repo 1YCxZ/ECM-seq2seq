@@ -47,8 +47,7 @@ python train_ECM.py
 ```
 python infer_ECM.py
 ```
-- "save_infer_model.py"
-The file will first create a calculation graph, load the training parameters, and then save the infer model as a model file.
+- "save_infer_model.py" will first create a calculation graph, load the training parameters, and then save the infer model as a model file.
 At this time, you can use different languages of tensorflow API(C++/Java) to load the infer model.
 ```
 python save_infer_model.py
