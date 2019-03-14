@@ -1,11 +1,9 @@
 # -*- coding:utf-8 -*-
 import tensorflow as tf
-from tensorflow.contrib.rnn import LSTMStateTuple
 import math
 
 from tensorflow.contrib.seq2seq import tile_batch, BahdanauAttention,\
     BeamSearchDecoder, GreedyEmbeddingHelper, BasicDecoder, dynamic_decode, AttentionWrapper
-import numpy as np
 from encoder import build_encoder
 from cell import create_rnn_cell
 
@@ -97,7 +95,6 @@ class Seq2SeqModel():
         with tf.variable_scope('seq2seq_decoder'):
             encoder_length = self.encoder_length
             if self.beam_search:
-                # 如果使用beam_search，则需要将encoder的输出进行tile_batch，其实就是复制beam_size份。
                 print("use beamsearch decoding..")
                 encoder_outputs = tile_batch(encoder_outputs, multiplier=self.beam_size)
                 encoder_states = tile_batch(encoder_states, multiplier=self.beam_size)
@@ -121,7 +118,7 @@ class Seq2SeqModel():
 
             if self.mode == 'train':
                 decoder_inputs_embedded = tf.nn.embedding_lookup(self.embedding, self.decoder_inputs)
-
+                # training helper的作用就是决定下一个时序的decoder的输入为给定的decoder inputs, 而不是上一个时刻的输出
                 training_helper = tf.contrib.seq2seq.TrainingHelper(inputs=decoder_inputs_embedded,
                                                                     sequence_length=self.decoder_length,
                                                                     name='training_helper')
@@ -135,7 +132,7 @@ class Seq2SeqModel():
                                                                           impute_finished=True,
                                                                           maximum_iterations=self.max_target_sequence_length)
 
-                self.decoder_logits_train = tf.identity(decoder_outputs.rnn_output)
+                self.decoder_logits_train = decoder_outputs.rnn_output
 
                 self.loss = tf.contrib.seq2seq.sequence_loss(logits=self.decoder_logits_train,
                                                              targets=self.decoder_targets,
@@ -148,7 +145,7 @@ class Seq2SeqModel():
                 self.train_op = optimizer.apply_gradients(zip(clip_gradients, trainable_params))
 
             elif self.mode == 'infer':
-                start_tokens = tf.ones([self.batch_size, ], tf.int32) * SOS_ID
+                start_tokens = tf.ones([self.batch_size, ], tf.int32) * SOS_ID  # 这里的batch_size不需要复制
                 end_token = EOS_ID
 
                 if self.beam_search:
@@ -176,7 +173,6 @@ class Seq2SeqModel():
                 else:
                     self.infer_outputs = decoder_outputs.sample_id  # [batch_size, decoder_targets_length]
 
-        # =================================4, 保存模型
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=self.max_to_keep)
 
     def train(self, sess, batch):

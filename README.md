@@ -19,6 +19,42 @@ sample data here is only for showing the data format, not for training.
 - source: source sentence
 - target: target sentence
 
+## Just tell me how it works
+
+##### Set up work space
+Create a new folder by following the parameters "workspace" in the yaml configuration file.
+for example:
+```
+./works/example/
+```
+
+##### Prepare your data and configuration file
+you can check the sample data folder for the data format.Then you need to put them under path like
+```
+./works/example/data/
+```
+##### Train the model
+for training the basic model:
+```
+python train.py
+```
+for training ECM model:
+```
+python train_ECM.py
+```
+##### Infer
+- "infer_ECM.py" will first create a calculation graph of infer model then load the trained parameters, and finally perform the inference, which is not suitable for deployment.
+```
+python infer_ECM.py
+```
+- "save_infer_model.py"
+The file will first create a calculation graph, load the training parameters, and then save the infer model as a model file.
+At this time, you can use different languages of tensorflow API(C++/Java) to load the infer model.
+```
+python save_infer_model.py
+python infer_ECM_online.py
+```
+
 ## Model performance
 The following result is based on the dataset I crawled from BaiDu Tieba, including 3 emotion types:
 - no emotion: 321052
@@ -115,4 +151,3 @@ NTCIR
 Short Text Conversation Task(STC-3)
 chinese Emotional Conversation Generation (CECG) Subtask
 http://coai.cs.tsinghua.edu.cn/hml/challenge/dataset_description/
-这个数据集已经将情感分类好了，所以不需要额外的一个情感分类器去做标注，不过主办方推荐你去训练一个更好的分类器。

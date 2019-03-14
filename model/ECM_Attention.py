@@ -396,7 +396,7 @@ class ECMWrapper(rnn_cell_impl.RNNCell):
         r_cell_state = state.cell_state  # 首先取出上一个状态中的cell_state
         r_cell_state = r_cell_state[-1]  # 取cell_state的最后一层的状态
         if isinstance(r_cell_state, LSTMStateTuple):  # 如果是lstm就将c和h拼接起来
-            print('read_gate concat LSTMState C and H')
+            print('read gate concat LSTMState C and H')
             r_cell_state = tf.concat([r_cell_state.c, r_cell_state.h], axis=-1)
 
         read_inputs = tf.concat([inputs, r_cell_state, state.attention], axis=-1)  # internal_memory的read_gate inputs
