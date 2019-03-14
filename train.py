@@ -61,7 +61,7 @@ def main(args):
     vocab_size = config["embeddings"]["vocab_size"]
     embed_size = config["embeddings"]["embed_size"]
 
-    vocab_file = '%s/data_debug/%s-%s' % (work_space, "vocab", vocab_size)
+    vocab_file = '%s/data/%s-%s' % (work_space, "vocab", vocab_size)
     print("\tDone.")
 
     # Build the model and compute losses

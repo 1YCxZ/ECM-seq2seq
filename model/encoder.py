@@ -9,7 +9,8 @@ def build_encoder(embeddings, encoder_inputs, encoder_length,
                   bidir=False, dtype=tf.float32):
     """
     encoder: build rnn encoder for Seq2seq
-        source_ids: [batch_size, max_time]
+        encoder_inputs: [batch_size, max_time]
+        encoder_length: [batch_size]
         bidir: bidirectional or unidirectional
 
     Returns:

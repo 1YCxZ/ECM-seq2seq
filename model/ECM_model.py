@@ -116,7 +116,6 @@ class ECMModel():
             emo_cat = self.emo_cat
             emo_cat_embs = self.emo_cat_embs
             if self.beam_search:
-                # 如果使用beam_search，则需要将encoder的输出进行tile_batch，其实就是复制beam_size份。
                 print("use beamsearch decoding..")
                 encoder_outputs = tile_batch(encoder_outputs, multiplier=self.beam_size)
                 encoder_states = tile_batch(encoder_states, multiplier=self.beam_size)
