@@ -51,7 +51,7 @@ python infer_ECM.py
 At this time, you can use different languages of tensorflow API(C++/Java) to load the infer model.
 ```
 python save_infer_model.py
-python infer_ECM_online.py
+python infer_ECM_deploy.py
 ```
 
 ## Model performance
