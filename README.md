@@ -21,19 +21,19 @@ sample data here is only for showing the data format, not for training.
 
 ## Just tell me how it works
 
-##### Set up work space
+### Set up work space
 Create a new folder by following the parameters "workspace" in the yaml configuration file.
 for example:
 ```
 ./works/example/
 ```
 
-##### Prepare your data and configuration file
+### Prepare your data and configuration file
 you can check the sample data folder for the data format.Then you need to put them under path like
 ```
 ./works/example/data/
 ```
-##### Train the model
+### Train the model
 for training the basic model:
 ```
 python train.py
@@ -42,7 +42,7 @@ for training ECM model:
 ```
 python train_ECM.py
 ```
-##### Infer
+### Infer
 - "infer_ECM.py" will first create a calculation graph of infer model then load the trained parameters, and finally perform the inference, which is not suitable for deployment.
 ```
 python infer_ECM.py
