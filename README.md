@@ -84,41 +84,6 @@ The following result is based on the dataset I crawled from BaiDu Tieba, includi
 ##### Training perplexity
 ![Image text](./training_perplexity.png)
 
-#### Infer Results
-
-```
-src:西红柿 鸡蛋 汤  emotion:neg
-        pred 0:这样 啊 , 我 也 喜欢 菜汤 </s>
-        pred 1:这样 啊 , 我 没加 酱油 的 </s> </s>
-        pred 2:这样 啊 , 我 也 喜欢 喝汤 的 </s>
-        pred 3:这样 啊 , 我 没加 酱油 的 </s>
-        pred 4:这样 啊 , 我 也 喜欢 菜汤 , 我 喜欢 菜汤 </s>
-
-
-src:玩 哈哈 , 我 一般 是 各种 转发 哈哈 党  emotion:pos
-        pred 0:哈哈 , 是 啊 , 我 也 觉得 </s> </s> </s>
-        pred 1:哈哈 , 是 啊 , 我 也 觉得 </s> </s>
-        pred 2:哈哈 , 是 啊 , 我 也 是 这么 想 的 </s>
-        pred 3:哈哈 , 是 啊 , 我 也 是 这么 觉得 </s>
-        pred 4:哈哈 , 是 啊 , 我 也 觉得 </s>
-
-
-src:看 完后 不 懂 在 讲 什么  emotion:no
-        pred 0:我 也 不 懂 , 我 只 看 脸 了 </s>
-        pred 1:我 也 不 懂 , 我 只 看 脸 的 </s> </s>
-        pred 2:我 也 不 懂 , 我 只 看 脸 了 , 你 可以 看看 </s>
-        pred 3:我 也 不 懂 , 我 只 看 脸 了 , 你 是 男 是 女 </s> </s>
-        pred 4:我 也 不 懂 , 我 只 看 脸 的 </s>
-
-
-src:你 好像 只是 个 备胎  emotion:no
-        pred 0:不是 , 我 是 女 的 , 我 是 水瓶座 </s>
-        pred 1:不是 , 是 她 提出 的 , 我 也 是 醉 了 </s>
-        pred 2:不是 , 我 是 女 的 , 我 是 男 的 </s>
-        pred 3:不是 , 我 是 女 的 , 他 不 认识 我 </s>
-        pred 4:不是 , 我 是 女 的 , 他 不 喜欢 我 了 </s>
-```
-
 ## Extra dataset
 NTCIR
 Short Text Conversation Task(STC-3)
