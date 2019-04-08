@@ -119,32 +119,6 @@ src:你 好像 只是 个 备胎  emotion:no
         pred 4:不是 , 我 是 女 的 , 他 不 喜欢 我 了 </s>
 ```
 
-```
-src:我 是 你 爹  emotion:other
-        pred 0:我 是 你 爹 我 是 你 爹 的 孙子 </s> </s>
-        pred 1:我 是 你 爹 我 是 你 爹 的 孙子 </s>
-        pred 2:我 是 你 爹 我 是 你 爹 , 我 是 新人 </s> </s>
-        pred 3:我 是 你 爹 我 是 你 爹 , 我 是 新人 </s>
-        pred 4:我 是 你 爹 我 是 你 爹 , 我 是 你 爹 爹 </s>
-
-
-src:我 是 你 爹  emotion:pos
-        pred 0:这么 可爱 一定 是 男孩子 </s>
-        pred 1:哈哈 , 你 是 我 为数不多 的 高中生 </s>
-        pred 2:哈哈 , 你 是 我 为数不多 的 傻 逼 </s>
-        pred 3:哈哈 , 你 是 我 为数不多 的 亲切 </s>
-        pred 4:哈哈 , 你 是 我 为数不多 的 亲切 </s> </s>
-
-
-src:我 是 你 爹  emotion:neg
-        pred 0:傻 逼 玩意 , 你 是 猴子 派来 的 吗 </s> </s>
-        pred 1:傻 逼 玩意 , 你 是 猴子 派来 的 逗 逼 </s> </s>
-        pred 2:傻 逼 玩意 , 你 是 猴子 派来 的 你 奶奶 的 </s>
-        pred 3:傻 逼 玩意 , 你 是 猴子 派来 的 逗 逼 </s>
-        pred 4:傻 逼 玩意 , 你 是 猴子 派来 的 吗 </s>
-
-```
-
 ## Extra dataset
 NTCIR
 Short Text Conversation Task(STC-3)
