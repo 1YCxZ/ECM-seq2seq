@@ -10,7 +10,7 @@ So, I implement a new ECM model based on the [tensorflow seq2seq API](https://te
 
 ## Requirements
 - python 2.7
-- tensorflow >= 1.4
+- tensorflow == 1.4
 
 ## Sample data
 sample data here is only for showing the data format, not for training.
