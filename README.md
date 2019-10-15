@@ -89,3 +89,4 @@ NTCIR
 Short Text Conversation Task(STC-3)
 chinese Emotional Conversation Generation (CECG) Subtask
 http://coai.cs.tsinghua.edu.cn/hml/challenge/dataset_description/
+You can also find the dataset in this project.
